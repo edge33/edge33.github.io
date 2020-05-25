@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<link href="https://fonts.googleapis.com/css?family=Merriweather:300|Raleway:400,700" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/style.css">
+<title>The poor captain's way to fly long-hauls in x-plane 11 with short time</title>
+<!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>The poor captain’s way to fly long-hauls in x-plane 11 with short time | Your awesome title</title>
+<meta name="generator" content="Jekyll v4.0.1" />
+<meta property="og:title" content="The poor captain’s way to fly long-hauls in x-plane 11 with short time" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="When I firstly, started flying long-haul planes, as a Flight-Sim enthusiast, I started wondering whether there was a “smart” way to cover long distances without having to stare at the monitor while the plane cruises with autopilot doing his things. At some point when using FSX or P3D I found this pretty sweet piece of software: Lorby Time Machine." />
+<meta property="og:description" content="When I firstly, started flying long-haul planes, as a Flight-Sim enthusiast, I started wondering whether there was a “smart” way to cover long distances without having to stare at the monitor while the plane cruises with autopilot doing his things. At some point when using FSX or P3D I found this pretty sweet piece of software: Lorby Time Machine." />
+<link rel="canonical" href="/lua/x-plane11/2020/05/25/how-to-fly.html" />
+<meta property="og:url" content="/lua/x-plane11/2020/05/25/how-to-fly.html" />
+<meta property="og:site_name" content="Your awesome title" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2020-05-25T11:48:30+02:00" />
+<script type="application/ld+json">
+{"mainEntityOfPage":{"@type":"WebPage","@id":"/lua/x-plane11/2020/05/25/how-to-fly.html"},"description":"When I firstly, started flying long-haul planes, as a Flight-Sim enthusiast, I started wondering whether there was a “smart” way to cover long distances without having to stare at the monitor while the plane cruises with autopilot doing his things. At some point when using FSX or P3D I found this pretty sweet piece of software: Lorby Time Machine.","headline":"The poor captain’s way to fly long-hauls in x-plane 11 with short time","dateModified":"2020-05-25T11:48:30+02:00","datePublished":"2020-05-25T11:48:30+02:00","@type":"BlogPosting","url":"/lua/x-plane11/2020/05/25/how-to-fly.html","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+</head>
+  <body>
+    <main class="container">
+      <section class="about">
+        <a href="/"><img src="/assets/portfolio.png" alt="Francesco Maida"></a>
+        <h2 id="title">
+          <a href="/">Francesco Maida</a>
+        </h2>
+        <p class="tagline">software engineer</p>
+        <ul class="social"><a href="https://github.com/edge33">
+              <li>
+                <i class="icon-github-circled"></i>
+              </li>
+            </a><a href="https://www.linkedin.com/in/francescomaida91">
+              <li>
+                <i class="icon-linkedin-squared"></i>
+              </li>
+            </a><a href="https://twitter.com/edge331">
+              <li>
+                <i class="icon-twitter-squared"></i>
+              </li>
+            </a></ul><p>&copy;
+          2020</p><div>
+              <p>Dark Mode
+                <i class="icon-moon"></i>
+                <label class="switch"> 
+                  <input type="checkbox" id="dark-mode-toggle"> 
+                  <span class="slider round" onclick="toggleDarkMode()"></span>
+                </label>
+              </p>
+            </div>
+            <script type="text/javascript" src="/assets/js/darkmode.js"></script></section>
+      <section class="content">
+        <div class="post-container">
+  <a class="post-link" href="/lua/x-plane11/2020/05/25/how-to-fly.html">
+    <h2 class="post-title">The poor captain&#39;s way to fly long-hauls in x-plane 11 with short time</h2>
+  </a>
+  <div class="post-meta">
+    <div class="post-date"><i class="icon-calendar"></i>May 25, 2020</div><ul class="post-categories"><li>LUA</li><li>x-plane11</li></ul></div>
+  <div class="post">
+    <p>When I firstly, started flying long-haul planes, as a Flight-Sim enthusiast, I started wondering whether
+there was a “smart” way to cover long distances without having to stare at the monitor while the plane cruises
+with autopilot doing his things. At some point when using FSX or P3D I found this pretty sweet piece of software: <a href="https://www.avsim.com/forums/topic/521324-lorby-time-machine-released/">Lorby Time Machine</a>.</p>
+
+<p>Problem is: I dropped FSX 10 years ago in favor of X-plane 11. So, how could I manage to compress the time when bugging from one point of the globe to the opposite?
+X-plane community has developed the great <code class="highlighter-rouge">FlyWithLua</code> environment to quicky write x-plane addons that suit our needs!</p>
+
+<p>So, in collaboration with Fox, a very kind user from <a href="https://forums.x-plane.org/">x-plane.org forum</a>. I 
+decided to write the <em>SmartGroundAcceleration</em> FlyWithLua script.</p>
+
+<p>The idea behind this script is simple, when navigating at cruise level I want the plane to follow the route to the T/D point,
+but I want it to cruise at 16 times the cruising speed.</p>
+
+<p>You might think that increasing the ground speed of the plane is sufficient to keep up with the route… but what happens
+if you need the plane to turn at 16 times it’s cruising speed, let’s say Mach 0.7? You guessed it, the plane will drift way
+out of the intended route.</p>
+
+<p>So how can we compress time in a <em>smart</em> way?</p>
+
+<p>The solution is the following, we will run this set of actions to keep up with the route:</p>
+
+<ol>
+  <li>Increase ground speed multiplier (let say 16 times) to the next waypoint on the flight plan</li>
+  <li>When at a given distance from the waypoint (default is 3 NM) reset the speed multiplier to 1</li>
+  <li>Give the plane, some time and space to catch up with the route, do the turn to the next waypoint if needed</li>
+  <li>When last waypoint is 3 NM behind restore the multiplier to the initially requested value (16)</li>
+  <li>Pause when reaching a given distance from the destination airport</li>
+</ol>
+
+<p>let’s take a look at how we implement these actions in the script; let’s say we are running with multiplier
+set to 16, then:</p>
+
+<div class="language-lua highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">-- Basically check whether the plane is drifting away from the intended route</span>
+<span class="k">if</span> <span class="n">tf_TrackOffset</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">.</span><span class="mi">3</span> <span class="k">then</span>
+    <span class="c1">-- restore multiplier to 1</span>
+    <span class="n">tf_GroundCompression</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="c1">-- this flegs</span>
+    <span class="n">tf_ProtectionActive</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>Here we check whether the plane has reached the set distance from the destination:</p>
+<div class="language-lua highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="p">(</span><span class="n">tf_distanceToPause</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">tf_distanceToPause</span> <span class="o">&gt;=</span> <span class="nb">math.floor</span><span class="p">(</span><span class="n">tf_DistanceFromDestination</span><span class="o">+</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">)</span> <span class="p">)</span> <span class="k">then</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"pause"</span><span class="p">)</span>
+    <span class="n">command_once</span><span class="p">(</span><span class="s2">"sim/operation/pause_toggle"</span><span class="p">)</span>
+    <span class="n">tf_GroundCompression</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">tf_ProtectionActive</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">tf_TurnGCOnTarget</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">tf_scriptActivate</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>If the plane is getting close to the WP we set the multiplier back to 1</p>
+
+<div class="language-lua highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">-- I am close to the waypoint I need to reset speed to 1</span>
+<span class="k">if</span> <span class="n">tf_DMEDistance</span> <span class="o">&lt;</span> <span class="n">tf_WPThreshold</span> <span class="ow">and</span> <span class="n">tf_GroundCompression</span> <span class="o">&gt;</span> <span class="mi">1</span>  <span class="k">then</span>
+    <span class="n">tf_GroundCompression</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">tf_ProtectionActive</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>When the plane is levelled, and we are past the previous WP we can increase the multiplier</p>
+
+<div class="language-lua highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="n">tf_DMEDistance</span> <span class="o">&gt;</span> <span class="n">tf_WPThreshold</span> <span class="ow">and</span> <span class="n">tf_ProtectionActive</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">tf_DMEDistance</span> <span class="o">&lt;</span> <span class="n">tf_TurnGCOnTarget</span> <span class="ow">and</span> <span class="nb">math.abs</span><span class="p">(</span><span class="n">tf_roll</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="k">then</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"restoring: "</span><span class="o">..</span> <span class="n">tf_SelectedCompressionRate</span><span class="p">)</span>
+    <span class="n">tf_GroundCompression</span> <span class="o">=</span> <span class="n">tf_SelectedCompressionRate</span>
+    <span class="n">tf_ProtectionActive</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">tf_TurnGCOnTarget</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>You can find the full script <a href="https://github.com/edge33/XPlaneFLyWithLUA/blob/master/SmartGroundAcceleration/tf_SmartGroundAcceleration%20v0.01%20FMS.lua">here</a></p>
+
+<p>It works with planes that use the default Laminar X-FMS, but you may try to change the Datarefs in order to adapt it to other planes, as long as navigation
+Datarefs are available. I used Zibo 737 to test this plugin</p>
+
+
+  </div></div>
+
+      </section>
+    </main></body>
+</html>

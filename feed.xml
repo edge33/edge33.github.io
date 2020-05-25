@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.0.1">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2020-05-25T18:54:53+02:00</updated><id>/feed.xml</id><title type="html">Your awesome title</title><subtitle>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</subtitle><entry><title type="html">The poor captain’s way to fly long-hauls in x-plane 11 with short time</title><link href="/lua/x-plane11/2020/05/25/how-to-fly.html" rel="alternate" type="text/html" title="The poor captain's way to fly long-hauls in x-plane 11 with short time" /><published>2020-05-25T11:48:30+02:00</published><updated>2020-05-25T11:48:30+02:00</updated><id>/lua/x-plane11/2020/05/25/how-to-fly</id><content type="html" xml:base="/lua/x-plane11/2020/05/25/how-to-fly.html">&lt;p&gt;When I firstly, started flying long-haul planes, as a Flight-Sim enthusiast, I started wondering whether
+there was a “smart” way to cover long distances without having to stare at the monitor while the plane cruises
+with autopilot doing his things. At some point when using FSX or P3D I found this pretty sweet piece of software: &lt;a href=&quot;https://www.avsim.com/forums/topic/521324-lorby-time-machine-released/&quot;&gt;Lorby Time Machine&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Problem is: I dropped FSX 10 years ago in favor of X-plane 11. So, how could I manage to compress the time when bugging from one point of the globe to the opposite?
+X-plane community has developed the great &lt;code class=&quot;highlighter-rouge&quot;&gt;FlyWithLua&lt;/code&gt; environment to quicky write x-plane addons that suit our needs!&lt;/p&gt;
+
+&lt;p&gt;So, in collaboration with Fox, a very kind user from &lt;a href=&quot;https://forums.x-plane.org/&quot;&gt;x-plane.org forum&lt;/a&gt;. I 
+decided to write the &lt;em&gt;SmartGroundAcceleration&lt;/em&gt; FlyWithLua script.&lt;/p&gt;
+
+&lt;p&gt;The idea behind this script is simple, when navigating at cruise level I want the plane to follow the route to the T/D point,
+but I want it to cruise at 16 times the cruising speed.&lt;/p&gt;
+
+&lt;p&gt;You might think that increasing the ground speed of the plane is sufficient to keep up with the route… but what happens
+if you need the plane to turn at 16 times it’s cruising speed, let’s say Mach 0.7? You guessed it, the plane will drift way
+out of the intended route.&lt;/p&gt;
+
+&lt;p&gt;So how can we compress time in a &lt;em&gt;smart&lt;/em&gt; way?&lt;/p&gt;
+
+&lt;p&gt;The solution is the following, we will run this set of actions to keep up with the route:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Increase ground speed multiplier (let say 16 times) to the next waypoint on the flight plan&lt;/li&gt;
+  &lt;li&gt;When at a given distance from the waypoint (default is 3 NM) reset the speed multiplier to 1&lt;/li&gt;
+  &lt;li&gt;Give the plane, some time and space to catch up with the route, do the turn to the next waypoint if needed&lt;/li&gt;
+  &lt;li&gt;When last waypoint is 3 NM behind restore the multiplier to the initially requested value (16)&lt;/li&gt;
+  &lt;li&gt;Pause when reaching a given distance from the destination airport&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;let’s take a look at how we implement these actions in the script; let’s say we are running with multiplier
+set to 16, then:&lt;/p&gt;
+
+&lt;div class=&quot;language-lua highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;-- Basically check whether the plane is drifting away from the intended route&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tf_TrackOffset&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;then&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;-- restore multiplier to 1&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;tf_GroundCompression&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;-- this flegs&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;tf_ProtectionActive&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Here we check whether the plane has reached the set distance from the destination:&lt;/p&gt;
+&lt;div class=&quot;language-lua highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;tf_distanceToPause&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;and&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tf_distanceToPause&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;math.floor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;tf_DistanceFromDestination&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;then&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;pause&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;command_once&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;sim/operation/pause_toggle&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;tf_GroundCompression&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;tf_ProtectionActive&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;tf_TurnGCOnTarget&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;tf_scriptActivate&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;false&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;If the plane is getting close to the WP we set the multiplier back to 1&lt;/p&gt;
+
+&lt;div class=&quot;language-lua highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;-- I am close to the waypoint I need to reset speed to 1&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tf_DMEDistance&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tf_WPThreshold&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;and&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tf_GroundCompression&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;  &lt;span class=&quot;k&quot;&gt;then&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;tf_GroundCompression&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;tf_ProtectionActive&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;When the plane is levelled, and we are past the previous WP we can increase the multiplier&lt;/p&gt;
+
+&lt;div class=&quot;language-lua highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tf_DMEDistance&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tf_WPThreshold&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;and&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tf_ProtectionActive&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;and&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tf_DMEDistance&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tf_TurnGCOnTarget&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;and&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;math.abs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;tf_roll&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;then&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;restoring: &quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;..&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tf_SelectedCompressionRate&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;tf_GroundCompression&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tf_SelectedCompressionRate&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;tf_ProtectionActive&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;tf_TurnGCOnTarget&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;You can find the full script &lt;a href=&quot;https://github.com/edge33/XPlaneFLyWithLUA/blob/master/SmartGroundAcceleration/tf_SmartGroundAcceleration%20v0.01%20FMS.lua&quot;&gt;here&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;It works with planes that use the default Laminar X-FMS, but you may try to change the Datarefs in order to adapt it to other planes, as long as navigation
+Datarefs are available. I used Zibo 737 to test this plugin&lt;/p&gt;</content><author><name></name></author><summary type="html">When I firstly, started flying long-haul planes, as a Flight-Sim enthusiast, I started wondering whether there was a “smart” way to cover long distances without having to stare at the monitor while the plane cruises with autopilot doing his things. At some point when using FSX or P3D I found this pretty sweet piece of software: Lorby Time Machine.</summary></entry></feed>
